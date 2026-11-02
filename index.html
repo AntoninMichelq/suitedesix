@@ -104,13 +104,16 @@
   .status { color: var(--muted); min-height: 22px; } .status.err { color: #ff6b81; }
 
   /* ---------- tactile ---------- */
-  #touch { position: fixed; left: 0; right: 0; bottom: 0; z-index: 4; display: none; align-items: flex-end; justify-content: space-between;
-    padding: 8px 10px calc(10px + env(safe-area-inset-bottom)); gap: 8px; pointer-events: none; }
+  #touch { position: fixed; right: 0; bottom: 0; z-index: 4; display: none; align-items: flex-end; justify-content: flex-end;
+    padding: 0 8px calc(12px + env(safe-area-inset-bottom)); pointer-events: none; }
   body.ingame.touch #touch { display: flex; }
   #touch .grp { display: flex; gap: 8px; align-items: flex-end; pointer-events: auto; }
   #touch .grp.col { flex-direction: column; align-items: stretch; gap: 8px; }
-  #touch .grp.col .tb.big { width: 128px; height: 70px; flex-direction: row; gap: 8px; font-size: 32px; }
-  #touch .grp.col .tb.big span { margin-top: 0; font-size: 15px; }
+  #touch .grp.col { width: 26vw; max-width: 140px; gap: 10px; }
+  #touch .grp.col .tb.big { width: 100%; height: min(124px, 16vh); font-size: 44px; border-radius: 18px; }
+  #touch .grp.col .tb.big span { margin-top: 6px; font-size: 14px; }
+  body:not(.portrait) #touch .grp.col { width: 120px; }
+  body:not(.portrait) #touch .grp.col .tb.big { height: 96px; }
   .tb { border: 0; color: #fff; font-family: var(--head); font-weight: 800; border-radius: 16px; display: flex; flex-direction: column;
     align-items: center; justify-content: center; line-height: 1; -webkit-tap-highlight-color: transparent; touch-action: none; }
   .tb.big { width: 92px; height: 86px; font-size: 38px; background: linear-gradient(180deg, rgba(141,92,255,.55), rgba(141,92,255,.3));
@@ -213,7 +216,7 @@
       <h3>FORMATIONS SPÉCIALES</h3>
       <p>Une <b>ligne</b> de 6, une <b>pyramide</b> (3 + 2 + 1) ou un <b>hexagone</b> (anneau de 6) : <b>toutes</b> les billes de cette couleur disparaissent !</p>
       <h3>EN VERSUS</h3>
-      <p>Chaque <b>formation spéciale</b> (ligne, pyramide ou hexagone) envoie une <b>salve</b> de billes de couleur qui pleuvent sur le terrain adverse. La jauge rouge à côté du plateau montre la salve que tu vas recevoir : réussis toi-même une formation avant que ta pièce se pose pour la bloquer. Si une bille dépasse la <b>ligne rouge</b>, c'est K.O.</p>
+      <p>Chaque <b>formation spéciale</b> (ligne, pyramide ou hexagone) envoie une <b>salve</b> : <b>2 lignes complètes</b> de billes de couleurs aléatoires qui tombent sur le terrain adverse. La jauge rouge à côté du plateau montre combien de lignes tu vas recevoir : réussis toi-même une formation avant que ta pièce se pose pour la bloquer. Si une bille dépasse la <b>ligne rouge</b>, c'est K.O.</p>
       <h3>COMMANDES</h3>
       <p><span class="kbd">←</span><span class="kbd">→</span> ou <span class="kbd">Q</span><span class="kbd">D</span> déplacer · <span class="kbd">↓</span>/<span class="kbd">S</span> accélérer · <span class="kbd">Espace</span>/<span class="kbd">↑</span> lâcher · <span class="kbd">Z</span><span class="kbd">X</span> tourner · <span class="kbd">Échap</span> pause · <span class="kbd">R</span> recommencer (solo)<br>Manette : croix, A/B tourner, Y lâcher, Start pause. Mobile : boutons à l'écran.</p>
     </div>
@@ -236,8 +239,6 @@
 </div>
 
 <div id="touch">
-  <div class="grp"><button data-k="rot_ccw" class="tb sm" aria-label="Rotation inverse">⟲</button></div>
-  <div class="thint">Glisse le doigt pour déplacer<br>Vers le bas : accélérer<br>Toucher : tourner</div>
   <div class="grp col">
     <button data-k="rot_cw" class="tb big" aria-label="Rotation">⟳<span>ROTATION</span></button>
     <button data-k="drop" class="tb big drop" aria-label="Lâcher">⤓<span>LÂCHER</span></button>
@@ -256,6 +257,7 @@ const FW = W * D, FH = (H - 1) * ROW_H + D;
 const COLORS = ["#ff4f6d", "#3fa8ff", "#3fd46b", "#ffd23f", "#b86bff"];
 const COLOR_NAMES = ["ROUGE", "BLEU", "VERT", "JAUNE", "VIOLET"];
 const GARBAGE_COLOR = 5;
+const SALVO_ROWS = 2;          // lignes envoyées par formation spéciale
 const DIRS = [[1,0],[-1,0],[0,1],[-1,1],[0,-1],[1,-1]];
 const AXES = [[1,0],[0,1],[-1,1]];
 const PEER_PREFIX = "suitedesix-v1-";
@@ -477,7 +479,7 @@ class Board {
       if (shape) {
         let extra = 0;
         for (const [k, b] of this.grid) if (b.c === col && !clear.has(k)) { clear.add(k); extra++; }
-        gained += 300 + extra * 20; attack += 6 + Math.floor(extra / 2); // salve envoyée à l'adversaire
+        gained += 300 + extra * 20; attack += SALVO_ROWS; // salve : lignes de billes envoyées à l'adversaire
         specials.push({ shape, col, g });
       }
     }
@@ -502,7 +504,7 @@ class Board {
     specials.length ? this.sfx("special") : this.sfx("clear", this.chain);
     if (this.mode === "versus" && attack > 0) {
       const cancel = Math.min(this.pending, attack); this.pending -= cancel; attack -= cancel;
-      if (attack > 0 && this.onAttack) { this.attackSent += attack; this.onAttack(attack, this); this.sfx("attack"); this.popup(this.ox + FW / 2, this.oy + 170, `SALVE ×${attack}`, "#ff6b81", 34, 1.3, true); }
+      if (attack > 0 && this.onAttack) { this.attackSent += attack; this.onAttack(attack, this); this.sfx("attack"); this.popup(this.ox + FW / 2, this.oy + 170, `SALVE +${attack} LIGNES`, "#ff6b81", 32, 1.3, true); }
       else if (cancel > 0) this.popup(this.ox + FW / 2, this.oy + 170, `SALVE BLOQUÉE`, "#7dffa8", 30, 1.2, true);
     }
     this.clearTimer = 0.3; this.state = "clear";
@@ -535,19 +537,27 @@ class Board {
     if (this.pending > 0) { this.dropGarbage(); return; }
     this.state = "play"; this.spawn();
   }
+  // Salve reçue : des lignes complètes de billes de couleurs aléatoires arrivent par le haut
   dropGarbage() {
-    const n = Math.min(this.pending, 18); this.pending -= n;
-    const slots = [];
-    for (let r = H - 2; r < H; r++) for (let q = -r; q <= W; q++) if (this.free(q, r)) slots.push([q, r]);
-    slots.sort(() => Math.random() - .5);
-    for (let i = 0; i < Math.min(n, slots.length); i++) {
-      const [q, r] = slots[i];
-      this.put(q, r, rnd(this.nColors), false, this.oy - 30 - rnd(60));
-      this.grid.get(K(q, r)).delay = i * 0.045 + Math.random() * 0.05;
+    const rows = Math.min(this.pending, SALVO_ROWS); this.pending -= rows;
+    let placed = 0;
+    for (let ri = 0; ri < rows; ri++) {
+      const r = H - 1 - ri;
+      for (let q = -r; q <= W; q++) {
+        if (!this.free(q, r)) continue;
+        // couleur aléatoire, en évitant si possible celles des voisines déjà posées
+        const near = new Set(DIRS.map(([dq, dr]) => this.grid.get(K(q + dq, r + dr))).filter(Boolean).map(b => b.c));
+        const opts = [...Array(this.nColors).keys()].filter(c => !near.has(c));
+        const c = opts.length ? opts[rnd(opts.length)] : rnd(this.nColors);
+        this.put(q, r, c, false, this.oy - 40 - ri * ROW_H);
+        this.grid.get(K(q, r)).delay = xpos(q, r) * 0.035 + ri * 0.12;   // effet de vague
+        placed++;
+      }
     }
-    this.shake = .7; this.sfx("garbage"); this.popup(this.ox + FW / 2, this.oy + 60, "SALVE !", "#ff6b81", 40, 1, true);
-    this.resolveTimer = Math.min(n, slots.length) * 0.045 + 0.3; this.state = "resolve";
+    this.shake = .8; this.sfx("garbage"); this.popup(this.ox + FW / 2, this.oy + 60, `SALVE ! +${rows} LIGNES`, "#ff6b81", 34, 1.1, true);
+    this.resolveTimer = W * 0.035 + rows * 0.12 + 0.35; this.state = "resolve";
   }
+
   die() { if (this.state === "dead") return; this.state = "dead"; this.piece = null; this.shake = 1; this.sfx("ko"); if (this.onDead) this.onDead(); }
   popup(x, y, text, col, size, life, big = false) { this.popups.push({ x, y, text, col, size, life, max: life, big }); }
 
@@ -839,10 +849,10 @@ function drawBoardInner(b, opt) {
   const gx = side === "left" ? x0 - 14 : x0 + w + 6, gh = h;
   ctx.fillStyle = "rgba(255,255,255,.06)"; ctx.fillRect(gx, y0, 8, gh);
   if (b.pending > 0) {
-    const fh = Math.min(1, b.pending / 18) * gh;
-    ctx.shadowColor = "#ff2f5b"; ctx.shadowBlur = 12; ctx.fillStyle = b.pending >= 12 ? "#ff2f5b" : "#ff7a45";
+    const fh = Math.min(1, b.pending / 6) * gh;
+    ctx.shadowColor = "#ff2f5b"; ctx.shadowBlur = 12; ctx.fillStyle = b.pending >= 4 ? "#ff2f5b" : "#ff7a45";
     ctx.fillRect(gx, y0 + gh - fh, 8, fh); ctx.shadowBlur = 0;
-    text(String(b.pending), gx + 4, y0 + gh - fh - 8, 20, "#ff6b81", "center");
+    text(b.pending + "L", gx + 4, y0 - 10, 18, "#ff6b81", "center");
   }
   // nom
   if (name) {
@@ -896,7 +906,7 @@ const game = { screen: "menu", board: null, opp: null, bot: null, vs: null, aiLe
 const salvos = [];
 function launchSalvo(from, to, n, onArrive) {
   if (!from || !to) { onArrive && onArrive(); return; }
-  const shots = Math.min(n, 12);
+  const shots = Math.min(n * 6, 14);
   for (let i = 0; i < shots; i++) {
     const [x0, y0] = toScreen(from, from.ox + FW / 2 + (Math.random() - .5) * 120, from.oy + FH * .45 + (Math.random() - .5) * 120);
     const [x1, y1] = toScreen(to, to.ox + FW * (.1 + .8 * Math.random()), to.oy + 10);
@@ -923,27 +933,30 @@ function drawSalvos() {
   }
 }
 
-const TOUCH_BAR = 166;            // place réservée aux boutons tactiles (portrait)
+const SIDE_COL = 118;             // colonne de droite (boutons tactiles / adversaire) en portrait
 const P_TOP = 140;                // haut du plateau en portrait (stats au-dessus)
 // En portrait, le plateau est mis à l'échelle pour tenir entre les stats et les boutons.
 function fitPortrait(b, maxW) {
   b.ox = 26; b.oy = 8;                                   // coordonnées locales (jauge à gauche)
   const localW = b.ox + FW + 10, localH = FH + 16;
-  const availH = VH - P_TOP - (IS_TOUCH ? TOUCH_BAR : 30) - 6;
+  const availH = VH - P_TOP - 18;
   b.vs = Math.min(1, availH / localH, maxW / localW);
   b.vy = P_TOP;
   return localW * b.vs;
 }
 function layoutSolo(b) {
   b.vx = 0; b.vy = 0; b.vs = 1;
-  if (PORTRAIT) { const w = fitPortrait(b, VW - 8); b.vx = (VW - w) / 2; }
+  if (PORTRAIT) {
+    if (IS_TOUCH) { fitPortrait(b, VW - SIDE_COL); b.vx = 2; }
+    else { const w = fitPortrait(b, VW - 8); b.vx = (VW - w) / 2; }
+  }
   else { b.ox = Math.round((VW - FW) / 2); b.oy = 92; }
 }
 function layoutVersus() {
   const b = game.board, o = game.opp;
   b.vx = b.vy = o.vx = o.vy = 0; b.vs = o.vs = 1;
   if (PORTRAIT) {
-    const w = fitPortrait(b, VW - 118); b.vx = 2;
+    const w = fitPortrait(b, VW - SIDE_COL); b.vx = 2;
     const colX = b.vx + w + 4, colW = VW - colX - 6;
     o.ox = 8; o.oy = 8; o.vs = Math.min(colW / (FW + 16), .4);
     o.vx = colX + (colW - (FW + 16) * o.vs) / 2; o.vy = P_TOP + 24;
@@ -1215,6 +1228,11 @@ function drawSolo(b) {
     if (b.mode === "levels") { const n = [...b.grid.values()].filter(x => x.star).length; drawStar(ctx, 122, y + 12, 9, "#fff59a"); text(`× ${n}`, 135, y + 19, 20, "#fff59a", "left", { italic: true }); }
     else miniStat("BILLES", String(b.cleared), 112, y, "left", "#fff", true);
     drawNextRow(b, VW - 176, y, 170);
+    if (IS_TOUCH) {
+      const cx = VW - SIDE_COL / 2 + 2;
+      ["GLISSER", "déplacer", "", "VERS LE BAS", "accélérer", "", "COUP SEC ↓", "lâcher", "", "TOUCHER", "tourner"].forEach((l, i) =>
+        text(l, cx, P_TOP + 22 + i * 17, l === l.toUpperCase() && l ? 13 : 13, l === l.toUpperCase() ? "rgba(255,255,255,.55)" : "rgba(255,255,255,.35)", "center", l === l.toUpperCase() ? { weight: 800 } : { font: BODY, weight: 500 }));
+    }
   } else {
     drawBoard(b, { name: save.name || "Joueur", accent: "#20d3b0", side: "left", local: true });
     const lx = b.ox - 40;
