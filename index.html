@@ -108,6 +108,9 @@
     padding: 8px 10px calc(10px + env(safe-area-inset-bottom)); gap: 8px; pointer-events: none; }
   body.ingame.touch #touch { display: flex; }
   #touch .grp { display: flex; gap: 8px; align-items: flex-end; pointer-events: auto; }
+  #touch .grp.col { flex-direction: column; align-items: stretch; gap: 8px; }
+  #touch .grp.col .tb.big { width: 128px; height: 70px; flex-direction: row; gap: 8px; font-size: 32px; }
+  #touch .grp.col .tb.big span { margin-top: 0; font-size: 15px; }
   .tb { border: 0; color: #fff; font-family: var(--head); font-weight: 800; border-radius: 16px; display: flex; flex-direction: column;
     align-items: center; justify-content: center; line-height: 1; -webkit-tap-highlight-color: transparent; touch-action: none; }
   .tb.big { width: 92px; height: 86px; font-size: 38px; background: linear-gradient(180deg, rgba(141,92,255,.55), rgba(141,92,255,.3));
@@ -233,9 +236,12 @@
 </div>
 
 <div id="touch">
-  <div class="grp"><button data-k="rot_ccw" class="tb sm" aria-label="Rotation inverse">⟲</button><button data-k="rot_cw" class="tb big" aria-label="Rotation">⟳<span>ROTATION</span></button></div>
-  <div class="thint">Glisse le doigt pour déplacer<br>Vers le bas : accélérer · Toucher : tourner</div>
-  <div class="grp"><button data-k="drop" class="tb big drop" aria-label="Lâcher">⤓<span>LÂCHER</span></button></div>
+  <div class="grp"><button data-k="rot_ccw" class="tb sm" aria-label="Rotation inverse">⟲</button></div>
+  <div class="thint">Glisse le doigt pour déplacer<br>Vers le bas : accélérer<br>Toucher : tourner</div>
+  <div class="grp col">
+    <button data-k="rot_cw" class="tb big" aria-label="Rotation">⟳<span>ROTATION</span></button>
+    <button data-k="drop" class="tb big drop" aria-label="Lâcher">⤓<span>LÂCHER</span></button>
+  </div>
 </div>
 <div id="toast"></div>
 
@@ -917,7 +923,7 @@ function drawSalvos() {
   }
 }
 
-const TOUCH_BAR = 112;            // place réservée aux boutons tactiles (portrait)
+const TOUCH_BAR = 166;            // place réservée aux boutons tactiles (portrait)
 const P_TOP = 140;                // haut du plateau en portrait (stats au-dessus)
 // En portrait, le plateau est mis à l'échelle pour tenir entre les stats et les boutons.
 function fitPortrait(b, maxW) {
