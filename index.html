@@ -24,7 +24,7 @@
   /* ---------- en-tête ---------- */
   #topbar { position: fixed; top: 0; left: 0; right: 0; height: 60px; display: flex; align-items: center; gap: 16px;
     padding: 0 22px; z-index: 6; background: linear-gradient(180deg, rgba(7,7,13,.95), rgba(7,7,13,0)); }
-  .brand { font-family: var(--head); font-weight: 800; font-style: italic; font-size: 30px; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; }
+  .brand { font-family: var(--head); font-weight: 800; font-style: italic; font-size: 30px; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; white-space: nowrap; }
   .brand i { display: inline-flex; gap: 3px; }
   .brand i b { width: 11px; height: 11px; border-radius: 50%; display: block; }
   #topbar .sp { flex: 1; }
@@ -104,14 +104,28 @@
   .status { color: var(--muted); min-height: 22px; } .status.err { color: #ff6b81; }
 
   /* ---------- tactile ---------- */
-  #touch { position: fixed; left: 0; right: 0; bottom: 0; z-index: 4; display: none; padding: 10px; justify-content: space-between; pointer-events: none; }
+  #touch { position: fixed; left: 0; right: 0; bottom: 0; z-index: 4; display: none; align-items: flex-end; justify-content: space-between;
+    padding: 8px 10px calc(10px + env(safe-area-inset-bottom)); gap: 8px; pointer-events: none; }
   body.ingame.touch #touch { display: flex; }
-  #touch .grp { display: flex; gap: 8px; pointer-events: auto; }
-  #touch button { width: 62px; height: 62px; border-radius: 10px; border: 1px solid var(--line2); background: rgba(255,255,255,.08); color: #fff; font-size: 24px; }
-  #touch button:active { background: rgba(141,92,255,.45); }
+  #touch .grp { display: flex; gap: 8px; align-items: flex-end; pointer-events: auto; }
+  .tb { border: 0; color: #fff; font-family: var(--head); font-weight: 800; border-radius: 16px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; line-height: 1; -webkit-tap-highlight-color: transparent; touch-action: none; }
+  .tb.big { width: 92px; height: 86px; font-size: 38px; background: linear-gradient(180deg, rgba(141,92,255,.55), rgba(141,92,255,.3));
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.2), 0 6px 18px rgba(0,0,0,.4); }
+  .tb.big span { font-size: 13px; letter-spacing: 1px; margin-top: 4px; font-style: italic; }
+  .tb.drop { background: linear-gradient(180deg, rgba(255,79,109,.6), rgba(255,79,109,.32)); }
+  .tb.sm { width: 54px; height: 54px; font-size: 26px; background: rgba(255,255,255,.1); box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); }
+  .tb.active { transform: scale(.93); filter: brightness(1.4); }
+  .thint { flex: 1; text-align: center; font-size: 10px; line-height: 1.4; color: rgba(255,255,255,.35); padding-bottom: 8px; }
+  #b-pause { display: none; font-family: var(--head); font-weight: 800; font-size: 16px; color: #fff; background: rgba(255,255,255,.08);
+    border: 1px solid var(--line2); border-radius: 6px; padding: 7px 12px; cursor: pointer; }
+  body.ingame.touch #b-pause { display: block; }
+  body.portrait.ingame #topbar .brand, body.portrait.ingame #chip-name { display: none; }
+  body.portrait.ingame #topbar { background: none; pointer-events: none; height: 54px; }
+  body.portrait.ingame #topbar button { pointer-events: auto; padding: 6px 10px; font-size: 15px; }
   #toast { position: fixed; left: 50%; top: 70px; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--line2);
     box-shadow: inset 0 2px 0 var(--c-multi); padding: 10px 18px; border-radius: 4px; z-index: 9; display: none; font-weight: 600; }
-  @media (max-width: 700px) { #menu { padding: 64px 3vw 20px; } .tile .t { font-size: 30px; } .tile { min-height: 78px; } .field { grid-template-columns: 1fr 1.4fr 56px; } .brand { font-size: 24px; } }
+  @media (max-width: 700px) { #menu { padding: 64px 3vw 20px; } #topbar .chip.menu-only { display: none; } .tile .ico { font-size: 64px; opacity: .1; } .tile .d { font-size: 13px; } .tile .t { font-size: 30px; } .tile { min-height: 78px; } .field { grid-template-columns: 1fr 1.4fr 56px; } .brand { font-size: 24px; } }
 </style>
 </head>
 <body>
@@ -123,6 +137,7 @@
   <div class="chip menu-only">MEILLEUR<b id="chip-best">0</b></div>
   <div class="chip menu-only">IA BATTUE<b id="chip-ai">—</b></div>
   <div class="chip" id="chip-name">JOUEUR</div>
+  <button id="b-pause" aria-label="Pause">❚❚</button>
   <button id="b-quit">✕ QUITTER</button>
 </div>
 
@@ -218,8 +233,9 @@
 </div>
 
 <div id="touch">
-  <div class="grp"><button data-k="left">◀</button><button data-k="down">▼</button><button data-k="right">▶</button></div>
-  <div class="grp"><button data-k="rot_ccw">⟲</button><button data-k="drop">⤓</button><button data-k="rot_cw">⟳</button></div>
+  <div class="grp"><button data-k="rot_ccw" class="tb sm" aria-label="Rotation inverse">⟲</button><button data-k="rot_cw" class="tb big" aria-label="Rotation">⟳<span>ROTATION</span></button></div>
+  <div class="thint">Glisse le doigt pour déplacer<br>Vers le bas : accélérer · Toucher : tourner</div>
+  <div class="grp"><button data-k="drop" class="tb big drop" aria-label="Lâcher">⤓<span>LÂCHER</span></button></div>
 </div>
 <div id="toast"></div>
 
@@ -691,18 +707,28 @@ class Bot {
 // =====================================================================
 const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
 let T = 0;
+// Vue logique : 1280×720 en paysage, 400×(hauteur) en portrait (mobile)
+let VW = 1280, VH = 720, PORTRAIT = false, VIEW = 1, CSS_SCALE = 1;
+const IS_TOUCH = matchMedia("(pointer: coarse)").matches || "ontouchstart" in window;
 function fitCanvas() {
-  const s = Math.min(innerWidth / 1280, innerHeight / 720);
-  cv.style.width = 1280 * s + "px"; cv.style.height = 720 * s + "px";
+  PORTRAIT = innerHeight > innerWidth * 1.05;
+  if (PORTRAIT) { VW = 400; VH = Math.round(Math.max(660, Math.min(1000, 400 * innerHeight / innerWidth))); }
+  else { VW = 1280; VH = 720; }
+  const s = Math.min(innerWidth / VW, innerHeight / VH), dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+  CSS_SCALE = s; VIEW = s * dpr;
+  cv.width = Math.round(VW * VIEW); cv.height = Math.round(VH * VIEW);
+  cv.style.width = VW * s + "px"; cv.style.height = VH * s + "px";
+  document.body.classList.toggle("portrait", PORTRAIT);
+  if (typeof relayout === "function") relayout();
 }
-addEventListener("resize", fitCanvas); fitCanvas();
+addEventListener("resize", fitCanvas); addEventListener("orientationchange", () => setTimeout(fitCanvas, 200));
 
 const ballCache = new Map();
 function ballSprite(ci, flash) {
   const key = ci + (flash ? "f" : "");
   if (ballCache.has(key)) return ballCache.get(key);
-  const s = Math.ceil(D * 2), c = document.createElement("canvas"); c.width = c.height = s;
-  const g = c.getContext("2d"), x = s / 2, y = s / 2, r = R - 1.6;
+  const SPR = 3, s = Math.ceil(D * 2), c = document.createElement("canvas"); c.width = c.height = s * SPR;
+  const g = c.getContext("2d"), x = s / 2, y = s / 2, r = R - 1.6; g.scale(SPR, SPR);
   const base = ci === GARBAGE_COLOR ? "#6c6c80" : COLORS[ci];
   if (!flash && ci !== GARBAGE_COLOR) { g.shadowColor = base; g.shadowBlur = 10; }
   const gr = g.createRadialGradient(x - r * .35, y - r * .45, r * .05, x, y, r);
@@ -715,7 +741,7 @@ function ballSprite(ci, flash) {
   ballCache.set(key, c); return c;
 }
 function drawBall(c, x, y, ci, star, scale = 1, flash = false) {
-  const sp = ballSprite(ci, flash), s = sp.width * scale;
+  const sp = ballSprite(ci, flash), s = Math.ceil(D * 2) * scale;
   c.drawImage(sp, x - s / 2, y - s / 2, s, s);
   if (star) drawStar(c, x, y, (R - 2) * .62 * scale, "#fff59a");
 }
@@ -738,20 +764,25 @@ function text(s, x, y, size, col, align = "left", opt = {}) {
 }
 
 function drawBackground() {
-  ctx.fillStyle = "#07070d"; ctx.fillRect(0, 0, 1280, 720);
-  const g = ctx.createRadialGradient(640, 360, 50, 640, 360, 800);
+  ctx.fillStyle = "#07070d"; ctx.fillRect(0, 0, VW, VH);
+  const g = ctx.createRadialGradient(VW / 2, VH / 2, 50, VW / 2, VH / 2, 800);
   g.addColorStop(0, "rgba(60,40,120,.22)"); g.addColorStop(1, "rgba(0,0,0,0)");
-  ctx.fillStyle = g; ctx.fillRect(0, 0, 1280, 720);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);
   // grille diagonale animée
   ctx.strokeStyle = "rgba(255,255,255,.028)"; ctx.lineWidth = 1;
   const off = (T * 12) % 48;
   ctx.beginPath();
-  for (let x = -720; x < 1280 + 720; x += 48) { ctx.moveTo(x + off, 0); ctx.lineTo(x + off - 720, 720); ctx.moveTo(x - off, 0); ctx.lineTo(x - off + 720, 720); }
+  for (let x = -VH; x < VW + VH; x += 48) { ctx.moveTo(x + off, 0); ctx.lineTo(x + off - VH, VH); ctx.moveTo(x - off, 0); ctx.lineTo(x - off + VH, VH); }
   ctx.stroke();
 }
 
 function drawBoard(b, opt) {
-  const { name, wins = -1, accent = "#8d5cff", side = "left", local = false } = opt;
+  ctx.save(); ctx.translate(b.vx || 0, b.vy || 0); ctx.scale(b.vs || 1, b.vs || 1);
+  drawBoardInner(b, opt);
+  ctx.restore();
+}
+function drawBoardInner(b, opt) {
+  const { name, wins = -1, accent = "#8d5cff", side = "left", local = false, mini = false } = opt;
   ctx.save();
   if (b.shake > 0 && save.shake) ctx.translate((Math.random() - .5) * b.shake * 10, (Math.random() - .5) * b.shake * 10);
   const x0 = b.ox - 8, y0 = b.oy - 8, w = FW + 16, h = FH + 16;
@@ -836,11 +867,16 @@ function drawStats(rows, x, y, align) {
 }
 
 function overlay(title, lines, color = "#fff") {
-  ctx.fillStyle = "rgba(4,4,10,.72)"; ctx.fillRect(0, 0, 1280, 720);
-  ctx.fillStyle = "rgba(255,255,255,.04)"; ctx.fillRect(0, 250, 1280, 90 + lines.length * 34);
-  ctx.fillStyle = color; ctx.fillRect(0, 250, 1280, 3);
-  text(title, 640, 320, 72, color, "center", { italic: true, glow: color });
-  lines.forEach((l, i) => text(l, 640, 370 + i * 34, 24, i === lines.length - 1 ? "rgba(255,255,255,.6)" : "#e6e3ff", "center", { font: BODY, weight: 600 }));
+  const k = PORTRAIT ? .62 : 1, y0 = PORTRAIT ? VH * .34 : 250, lh = 34 * (PORTRAIT ? .78 : 1);
+  ctx.fillStyle = "rgba(4,4,10,.72)"; ctx.fillRect(0, 0, VW, VH);
+  ctx.fillStyle = "rgba(255,255,255,.04)"; ctx.fillRect(0, y0, VW, 90 * k + 30 + lines.length * lh);
+  ctx.fillStyle = color; ctx.fillRect(0, y0, VW, 3);
+  text(title, VW / 2, y0 + 70 * k, 72 * k, color, "center", { italic: true, glow: color });
+  if (IS_TOUCH) lines = lines.map(l => l
+    .replace("Échap ou Entrée pour reprendre", "Touche l'écran pour reprendre")
+    .replace("R pour recommencer · ✕ Quitter en haut à droite", "✕ Quitter en haut à droite")
+    .replace(/^Entrée : /, "Touche l'écran : ").replace("Échap : menu", "✕ : menu"));
+  lines.forEach((l, i) => text(l, VW / 2, y0 + 70 * k + 50 + i * lh, PORTRAIT ? 16 : 24, i === lines.length - 1 ? "rgba(255,255,255,.6)" : "#e6e3ff", "center", { font: BODY, weight: 600 }));
 }
 
 // =====================================================================
@@ -856,8 +892,9 @@ function launchSalvo(from, to, n, onArrive) {
   if (!from || !to) { onArrive && onArrive(); return; }
   const shots = Math.min(n, 12);
   for (let i = 0; i < shots; i++) {
-    salvos.push({ x0: from.ox + FW / 2 + (Math.random() - .5) * 120, y0: from.oy + FH * .45 + (Math.random() - .5) * 120,
-      x1: to.ox + FW * (.1 + .8 * Math.random()), y1: to.oy + 10, t: -i * .04, dur: .55 + Math.random() * .15,
+    const [x0, y0] = toScreen(from, from.ox + FW / 2 + (Math.random() - .5) * 120, from.oy + FH * .45 + (Math.random() - .5) * 120);
+    const [x1, y1] = toScreen(to, to.ox + FW * (.1 + .8 * Math.random()), to.oy + 10);
+    salvos.push({ x0, y0, x1, y1, t: -i * .04, dur: .55 + Math.random() * .15, sc: PORTRAIT ? .8 : 1,
       c: rnd(4), arc: 70 + Math.random() * 70, last: i === shots - 1 ? onArrive : null });
   }
   if (!shots && onArrive) onArrive();
@@ -874,14 +911,44 @@ function drawSalvos() {
     for (let k = 1; k <= 5; k++) {
       const uu = Math.max(0, u - k * .03), ee = uu * uu * (3 - 2 * uu);
       const tx = s.x0 + (s.x1 - s.x0) * ee, ty = s.y0 + (s.y1 - s.y0) * ee - Math.sin(uu * Math.PI) * s.arc;
-      ctx.globalAlpha = .35 - k * .06; drawBall(ctx, tx, ty, s.c, false, .6 - k * .06);
+      ctx.globalAlpha = .35 - k * .06; drawBall(ctx, tx, ty, s.c, false, (.6 - k * .06) * s.sc);
     }
-    ctx.globalAlpha = 1; drawBall(ctx, x, y, s.c, false, .7);
+    ctx.globalAlpha = 1; drawBall(ctx, x, y, s.c, false, .7 * s.sc);
   }
 }
 
-function layoutSolo(b) { b.ox = Math.round((1280 - FW) / 2); b.oy = 92; }
-function layoutVersus() { game.board.ox = 200; game.board.oy = 92; game.opp.ox = 1280 - 200 - FW; game.opp.oy = 92; }
+const TOUCH_BAR = 112;            // place réservée aux boutons tactiles (portrait)
+const P_TOP = 140;                // haut du plateau en portrait (stats au-dessus)
+// En portrait, le plateau est mis à l'échelle pour tenir entre les stats et les boutons.
+function fitPortrait(b, maxW) {
+  b.ox = 26; b.oy = 8;                                   // coordonnées locales (jauge à gauche)
+  const localW = b.ox + FW + 10, localH = FH + 16;
+  const availH = VH - P_TOP - (IS_TOUCH ? TOUCH_BAR : 30) - 6;
+  b.vs = Math.min(1, availH / localH, maxW / localW);
+  b.vy = P_TOP;
+  return localW * b.vs;
+}
+function layoutSolo(b) {
+  b.vx = 0; b.vy = 0; b.vs = 1;
+  if (PORTRAIT) { const w = fitPortrait(b, VW - 8); b.vx = (VW - w) / 2; }
+  else { b.ox = Math.round((VW - FW) / 2); b.oy = 92; }
+}
+function layoutVersus() {
+  const b = game.board, o = game.opp;
+  b.vx = b.vy = o.vx = o.vy = 0; b.vs = o.vs = 1;
+  if (PORTRAIT) {
+    const w = fitPortrait(b, VW - 118); b.vx = 2;
+    const colX = b.vx + w + 4, colW = VW - colX - 6;
+    o.ox = 8; o.oy = 8; o.vs = Math.min(colW / (FW + 16), .4);
+    o.vx = colX + (colW - (FW + 16) * o.vs) / 2; o.vy = P_TOP + 24;
+  } else { b.ox = 200; b.oy = 92; o.ox = VW - 200 - FW; o.oy = 92; }
+}
+function relayout() {
+  if (game.screen === "solo" && game.board) layoutSolo(game.board);
+  else if (game.screen === "versus" && game.board && game.opp) layoutVersus();
+}
+// position écran d'un point du plateau (pour les salves)
+function toScreen(b, x, y) { return [(b.vx || 0) + x * (b.vs || 1), (b.vy || 0) + y * (b.vs || 1)]; }
 function setIngame(on) { document.body.classList.toggle("ingame", on); }
 
 function startSolo(mode, level = 1) {
@@ -996,15 +1063,66 @@ function handleDas(b, dt) {
 
 document.querySelectorAll("#touch button").forEach(btn => {
   const k = btn.dataset.k;
-  btn.addEventListener("pointerdown", e => { e.preventDefault(); audio(); press(k); });
-  btn.addEventListener("pointerup", e => { e.preventDefault(); release(k); });
-  btn.addEventListener("pointerleave", () => release(k));
+  btn.addEventListener("pointerdown", e => {
+    e.preventDefault(); e.stopPropagation(); audio(); btn.classList.add("active");
+    if (navigator.vibrate) try { navigator.vibrate(8); } catch {}
+    if (overlayActive()) { press("accept"); release("accept"); } else press(k);
+  });
+  const up = e => { btn.classList.remove("active"); release(k); };
+  btn.addEventListener("pointerup", up); btn.addEventListener("pointercancel", up); btn.addEventListener("pointerleave", up);
 });
-cv.addEventListener("pointerdown", () => {
-  const b = game.board; if (!b) return;
-  if (game.screen === "solo" && (b.state === "dead" || b.state === "levelclear" || game.paused)) { press("accept"); release("accept"); }
-  else if (game.screen === "versus" && (game.paused || (game.matchOver && game.roundOver <= 0))) { press("accept"); release("accept"); }
+document.getElementById("b-pause").onclick = () => { if (game.screen === "solo" || (game.screen === "versus" && game.vs === "ai")) { press("pause"); release("pause"); } };
+
+function overlayActive() {
+  const b = game.board; if (!b) return false;
+  if (game.screen === "solo") return b.state === "dead" || b.state === "levelclear" || game.paused;
+  if (game.screen === "versus") return game.paused || (game.matchOver && game.roundOver <= 0);
+  return false;
+}
+// ----- gestes tactiles : glisser = déplacer, glisser vers le bas = accélérer / lâcher, toucher = tourner
+let gest = null;
+function toLogical(e) { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / CSS_SCALE, (e.clientY - r.top) / CSS_SCALE]; }
+cv.addEventListener("pointerdown", e => {
+  audio();
+  if (overlayActive()) { press("accept"); release("accept"); return; }
+  if (e.pointerType === "mouse" || !game.board || !inputAllowed()) return;
+  e.preventDefault();
+  const [x, y] = toLogical(e), t = performance.now();
+  gest = { id: e.pointerId, x0: x, y0: y, steps: 0, t0: t, ly: y, lt: t, vy: 0, moved: false, soft: false, done: false, pid: game.board.pieceId };
+  try { cv.setPointerCapture(e.pointerId); } catch {}
 });
+cv.addEventListener("pointermove", e => {
+  if (!gest || e.pointerId !== gest.id || gest.done) return;
+  e.preventDefault();
+  const b = game.board; if (!b || !inputAllowed()) return;
+  if (b.pieceId !== gest.pid) { // nouvelle pièce : on repart de la position actuelle du doigt
+    const [x, y] = toLogical(e); Object.assign(gest, { x0: x, y0: y, steps: 0, pid: b.pieceId, soft: false }); held.delete("down"); return;
+  }
+  const [x, y] = toLogical(e), t = performance.now();
+  const step = D * (b.vs || 1) * 0.8, dx = x - gest.x0, dy = y - gest.y0;
+  if (Math.abs(dx) > 10 || Math.abs(dy) > 10) gest.moved = true;
+  const target = Math.trunc(dx / step);
+  while (gest.steps < target) { if (b.move(1)) gest.steps++; else { gest.x0 += step; break; } }
+  while (gest.steps > target) { if (b.move(-1)) gest.steps--; else { gest.x0 -= step; break; } }
+  // vitesse verticale (px logiques / ms)
+  const dt = Math.max(1, t - gest.lt); gest.vy = gest.vy * .5 + ((y - gest.ly) / dt) * .5; gest.ly = y; gest.lt = t;
+  if (dy > 60 && gest.vy > 0.8 && Math.abs(dy) > Math.abs(dx) * 1.5) {      // coup sec vers le bas = lâcher
+    held.delete("down"); gest.soft = false; b.hardDrop(); gest.done = true;
+    if (navigator.vibrate) try { navigator.vibrate(15); } catch {}
+    return;
+  }
+  if (dy > 40 && Math.abs(dy) > Math.abs(dx)) { if (!gest.soft) { gest.soft = true; held.add("down"); } }
+  else if (gest.soft && dy < 25) { gest.soft = false; held.delete("down"); }
+});
+function endGesture(e) {
+  if (!gest || e.pointerId !== gest.id) return;
+  if (gest.soft) held.delete("down");
+  const quick = performance.now() - gest.t0 < 280;
+  if (!gest.moved && !gest.done && quick && inputAllowed() && game.board) game.board.rotate(true);
+  gest = null;
+}
+cv.addEventListener("pointerup", endGesture);
+cv.addEventListener("pointercancel", endGesture);
 
 let padPrev = {};
 function pollGamepad() {
@@ -1024,6 +1142,7 @@ let last = performance.now();
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now; T += dt;
   pollGamepad();
+  ctx.setTransform(VIEW, 0, 0, VIEW, 0, 0);
   drawBackground();
   const b = game.board;
   if (game.screen === "solo" && b) {
@@ -1067,20 +1186,43 @@ function updateVersus(dt) {
   }
 }
 
+function drawNextRow(b, x, y, w) {
+  text("SUIVANT", x, y, 14, "rgba(255,255,255,.5)", "left", { weight: 700 });
+  (b.next || []).slice(0, 3).forEach((cols, i) => {
+    const s = i === 0 ? .62 : .48, cx = x + 22 + i * (w / 3), cy = y + 34;
+    drawBall(ctx, cx - R * s, cy, cols[0], false, s); drawBall(ctx, cx + R * s, cy, cols[1], false, s); drawBall(ctx, cx, cy - ROW_H * s, cols[2], false, s);
+  });
+}
+function miniStat(label, value, x, y, align = "left", col = "#fff", small = false) {
+  text(label, x, y, small ? 11 : 13, "rgba(255,255,255,.45)", align, { weight: 700 });
+  text(value, x, y + (small ? 20 : 24), small ? 20 : 24, col, align, { italic: true });
+}
+
 function drawSolo(b) {
-  drawBoard(b, { name: save.name || "Joueur", accent: "#20d3b0", side: "left", local: true });
   const s = b.stats();
-  const lx = b.ox - 40;
-  const rows = [["SCORE", b.score.toLocaleString("fr-FR")], ["MEILLEUR", Math.max(save.best, b.score).toLocaleString("fr-FR"), "#ffd23f"],
-    [b.mode === "levels" ? "NIVEAU" : "VITESSE", String(b.level)], ["BILLES", String(b.cleared)], ["PIÈCES / S", s.pps.toFixed(2)], ["TEMPS", fmtTime(s.time)]];
-  drawStats(rows, lx, b.oy + 20, "right");
-  if (b.mode === "levels") {
-    const n = [...b.grid.values()].filter(x => x.star).length;
-    drawStar(ctx, lx - 62, b.oy + 382, 14, "#fff59a"); text(`× ${n}`, lx, b.oy + 392, 30, "#fff59a", "right", { italic: true });
+  if (PORTRAIT) {
+    drawBoard(b, { name: null, accent: "#20d3b0", side: "left", local: true });
+    const y = 64;
+    miniStat("SCORE", b.score.toLocaleString("fr-FR"), 14, y, "left", "#fff", true);
+    miniStat(b.mode === "levels" ? "NIVEAU" : "VITESSE", String(b.level), 14, y + 38, "left", "#fff", true);
+    miniStat("TEMPS", fmtTime(s.time), 112, y + 38, "left", "#fff", true);
+    if (b.mode === "levels") { const n = [...b.grid.values()].filter(x => x.star).length; drawStar(ctx, 122, y + 12, 9, "#fff59a"); text(`× ${n}`, 135, y + 19, 20, "#fff59a", "left", { italic: true }); }
+    else miniStat("BILLES", String(b.cleared), 112, y, "left", "#fff", true);
+    drawNextRow(b, VW - 176, y, 170);
+  } else {
+    drawBoard(b, { name: save.name || "Joueur", accent: "#20d3b0", side: "left", local: true });
+    const lx = b.ox - 40;
+    const rows = [["SCORE", b.score.toLocaleString("fr-FR")], ["MEILLEUR", Math.max(save.best, b.score).toLocaleString("fr-FR"), "#ffd23f"],
+      [b.mode === "levels" ? "NIVEAU" : "VITESSE", String(b.level)], ["BILLES", String(b.cleared)], ["PIÈCES / S", s.pps.toFixed(2)], ["TEMPS", fmtTime(s.time)]];
+    drawStats(rows, lx, b.oy + 20, "right");
+    if (b.mode === "levels") {
+      const n = [...b.grid.values()].filter(x => x.star).length;
+      drawStar(ctx, lx - 62, b.oy + 382, 14, "#fff59a"); text(`× ${n}`, lx, b.oy + 392, 30, "#fff59a", "right", { italic: true });
+    }
+    drawNextCol(b, b.ox + FW + 34, b.oy + 14, "left");
+    text(b.mode === "levels" ? "MODE NIVEAUX" : "MODE INFINI", b.ox + FW + 34, b.oy + 280, 22, "#20d3b0", "left", { italic: true });
+    ["Échap  pause", "R  recommencer"].forEach((l, i) => text(l, b.ox + FW + 34, b.oy + 312 + i * 24, 15, "rgba(255,255,255,.4)", "left", { font: BODY, weight: 500 }));
   }
-  drawNextCol(b, b.ox + FW + 34, b.oy + 14, "left");
-  text(b.mode === "levels" ? "MODE NIVEAUX" : "MODE INFINI", b.ox + FW + 34, b.oy + 280, 22, "#20d3b0", "left", { italic: true });
-  ["Échap  pause", "R  recommencer"].forEach((l, i) => text(l, b.ox + FW + 34, b.oy + 312 + i * 24, 15, "rgba(255,255,255,.4)", "left", { font: BODY, weight: 500 }));
   if (game.paused) overlay("PAUSE", ["Échap ou Entrée pour reprendre", "R pour recommencer · ✕ Quitter en haut à droite"], "#8d5cff");
   else if (b.state === "dead") overlay("K.O.", [`Score ${b.score.toLocaleString("fr-FR")} · ${b.cleared} billes · ${fmtTime(s.time)}`, `Meilleur score : ${save.best.toLocaleString("fr-FR")}`, "Entrée : rejouer · Échap : menu"], "#ff3c64");
   else if (b.state === "levelclear") overlay(`NIVEAU ${b.level} RÉUSSI`, ["Toutes les étoiles sont tombées !", `Score ${b.score.toLocaleString("fr-FR")}`, "Entrée : niveau suivant · Échap : menu"], "#20d3b0");
@@ -1089,25 +1231,43 @@ function drawSolo(b) {
 function drawVersus() {
   const b = game.board, o = game.opp;
   const accentMe = "#8d5cff", accentOpp = game.vs === "ai" ? "#ff4f6d" : "#20d3b0";
-  drawBoard(b, { name: save.name || "Toi", wins: game.myWins, accent: accentMe, side: "left", local: true });
-  drawBoard(o, { name: game.oppName, wins: game.oppWins, accent: accentOpp, side: "right" });
   const sb = b.stats(), so = o.stats();
-  drawStats([["SCORE", b.score.toLocaleString("fr-FR")], ["PIÈCES / S", sb.pps.toFixed(2)], ["ATTAQUE / MIN", sb.apm.toFixed(1)], ["TEMPS", fmtTime(sb.time)]], b.ox - 30, b.oy + 250, "right");
-  drawStats([["SCORE", o.score.toLocaleString("fr-FR")], ["PIÈCES / S", (so.pps || 0).toFixed(2)], ["ATTAQUE / MIN", (so.apm || 0).toFixed(1)], ["TEMPS", fmtTime(so.time || 0)]], o.ox + FW + 30, o.oy + 250, "left");
-  drawNextCol(b, b.ox - 30 - 92, b.oy + 14, "left");
-  drawNextCol(o, o.ox + FW + 30, o.oy + 14, "right");
-  // centre
-  text(`MANCHE ${game.round}`, 640, 130, 24, "rgba(255,255,255,.5)", "center", { italic: true });
-  text(`${game.myWins}`, 600, 210, 80, accentMe, "center", { italic: true, glow: accentMe });
-  text("–", 640, 205, 50, "rgba(255,255,255,.4)", "center");
-  text(`${game.oppWins}`, 680, 210, 80, accentOpp, "center", { italic: true, glow: accentOpp });
-  text("PREMIER À 2", 640, 245, 16, "rgba(255,255,255,.35)", "center", { weight: 700 });
-  if (game.vs === "ai") text("Échap : pause", 640, 690, 15, "rgba(255,255,255,.3)", "center", { font: BODY, weight: 500 });
+  if (PORTRAIT) {
+    drawBoard(b, { name: null, accent: accentMe, side: "left", local: true });
+    drawBoard(o, { name: null, accent: accentOpp, side: "right" });
+    // colonne de droite : adversaire
+    const ow = (FW + 16) * o.vs, cx = o.vx + ow / 2;
+    let nm = game.oppName.toUpperCase(); ctx.font = `italic 800 15px ${HEAD}`; while (nm.length > 3 && ctx.measureText(nm).width > ow + 14) nm = nm.slice(0, -1);
+    text(nm, cx, P_TOP + 16, 15, accentOpp, "center", { italic: true });
+    const oyb = o.vy + (FH + 16) * o.vs;
+    miniStat("SCORE", o.score.toLocaleString("fr-FR"), cx, oyb + 22, "center");
+    // bandeau du haut : manches, score, suivant
+    const y = 70;
+    text(`MANCHE ${game.round}`, 14, y, 13, "rgba(255,255,255,.5)", "left", { italic: true, weight: 700 });
+    text(`${game.myWins}`, 14, y + 46, 44, accentMe, "left", { italic: true, glow: accentMe });
+    text("–", 50, y + 42, 26, "rgba(255,255,255,.4)", "left");
+    text(`${game.oppWins}`, 70, y + 46, 44, accentOpp, "left", { italic: true, glow: accentOpp });
+    miniStat("SCORE", b.score.toLocaleString("fr-FR"), 120, y);
+    drawNextRow(b, VW - 176, y, 170);
+  } else {
+    drawBoard(b, { name: save.name || "Toi", wins: game.myWins, accent: accentMe, side: "left", local: true });
+    drawBoard(o, { name: game.oppName, wins: game.oppWins, accent: accentOpp, side: "right" });
+    drawStats([["SCORE", b.score.toLocaleString("fr-FR")], ["PIÈCES / S", sb.pps.toFixed(2)], ["ATTAQUE / MIN", sb.apm.toFixed(1)], ["TEMPS", fmtTime(sb.time)]], b.ox - 30, b.oy + 250, "right");
+    drawStats([["SCORE", o.score.toLocaleString("fr-FR")], ["PIÈCES / S", (so.pps || 0).toFixed(2)], ["ATTAQUE / MIN", (so.apm || 0).toFixed(1)], ["TEMPS", fmtTime(so.time || 0)]], o.ox + FW + 30, o.oy + 250, "left");
+    drawNextCol(b, b.ox - 30 - 92, b.oy + 14, "left");
+    drawNextCol(o, o.ox + FW + 30, o.oy + 14, "right");
+    text(`MANCHE ${game.round}`, 640, 130, 24, "rgba(255,255,255,.5)", "center", { italic: true });
+    text(`${game.myWins}`, 600, 210, 80, accentMe, "center", { italic: true, glow: accentMe });
+    text("–", 640, 205, 50, "rgba(255,255,255,.4)", "center");
+    text(`${game.oppWins}`, 680, 210, 80, accentOpp, "center", { italic: true, glow: accentOpp });
+    text("PREMIER À 2", 640, 245, 16, "rgba(255,255,255,.35)", "center", { weight: 700 });
+    if (game.vs === "ai") text("Échap : pause", 640, 690, 15, "rgba(255,255,255,.3)", "center", { font: BODY, weight: 500 });
+  }
 
   if (game.countdown > 0) {
     const n = Math.ceil(game.countdown - .2), frac = game.countdown - Math.floor(game.countdown);
-    ctx.fillStyle = "rgba(0,0,0,.35)"; ctx.fillRect(0, 0, 1280, 720);
-    text(n > 0 ? String(n) : "GO !", 640, 420, 150 + frac * 40, n > 0 ? "#ffffff" : "#ffe066", "center", { italic: true, glow: n > 0 ? "#8d5cff" : "#ffd23f" });
+    ctx.fillStyle = "rgba(0,0,0,.35)"; ctx.fillRect(0, 0, VW, VH);
+    text(n > 0 ? String(n) : "GO !", VW / 2, VH * .58, (150 + frac * 40) * (PORTRAIT ? .7 : 1), n > 0 ? "#ffffff" : "#ffe066", "center", { italic: true, glow: n > 0 ? "#8d5cff" : "#ffd23f" });
   } else if (game.paused) overlay("PAUSE", ["Échap ou Entrée pour reprendre"], "#8d5cff");
   else if (game.matchOver && game.roundOver <= 0) {
     const won = game.myWins > game.oppWins;
@@ -1117,17 +1277,18 @@ function drawVersus() {
     overlay(won ? "VICTOIRE" : "DÉFAITE", l, won ? "#3fd46b" : "#ff3c64");
   } else if (game.roundOver > 0) {
     const lastWon = b.state !== "dead";
-    text(lastWon ? "MANCHE GAGNÉE" : "MANCHE PERDUE", 640, 330, 44, lastWon ? "#7dffa8" : "#ff6b81", "center", { italic: true, outline: true, glow: lastWon ? "#3fd46b" : "#ff3c64" });
+    text(lastWon ? "MANCHE GAGNÉE" : "MANCHE PERDUE", VW / 2, PORTRAIT ? VH * .45 : 330, PORTRAIT ? 34 : 44, lastWon ? "#7dffa8" : "#ff6b81", "center", { italic: true, outline: true, glow: lastWon ? "#3fd46b" : "#ff3c64" });
   }
 }
 
-const deco = Array.from({ length: 22 }, (_, i) => ({ x: Math.random() * 1280, y: Math.random() * 720, v: 10 + Math.random() * 30, c: i % 5, s: .8 + Math.random() * 1.2 }));
+const deco = Array.from({ length: 22 }, (_, i) => ({ x: Math.random() * 1280, y: Math.random() * 1000, v: 10 + Math.random() * 30, c: i % 5, s: .8 + Math.random() * 1.2 }));
 function drawMenuBackdrop() {
   for (const d of deco) {
-    d.y -= d.v * 0.016; if (d.y < -50) { d.y = 770; d.x = Math.random() * 1280; }
+    d.y -= d.v * 0.016; if (d.y < -50) { d.y = VH + 50; d.x = Math.random() * VW; }
     ctx.globalAlpha = .14; drawBall(ctx, d.x, d.y, d.c, false, d.s); ctx.globalAlpha = 1;
   }
   // hexagone géant animé à droite
+  if (PORTRAIT) return;
   const cx = 1010, cy = 380;
   for (let i = 0; i < 6; i++) { const a = T * .4 + i * Math.PI / 3; drawBall(ctx, cx + Math.cos(a) * D * 2.2, cy + Math.sin(a) * D * 2.2, i % 5, false, 2.1); }
   drawBall(ctx, cx, cy, 3, true, 2.1);
@@ -1182,7 +1343,7 @@ bindRange("vol", "vol", v => v + " %");
 $("vol").addEventListener("change", () => { audio(); sfx("clear", 2); });
 $("ghost").checked = save.ghost; $("ghost").onchange = e => { save.ghost = e.target.checked; persist(); };
 $("shk").checked = save.shake; $("shk").onchange = e => { save.shake = e.target.checked; persist(); };
-if (matchMedia("(pointer: coarse)").matches) document.body.classList.add("touch");
+if (IS_TOUCH) document.body.classList.add("touch");
 
 // =====================================================================
 //  RÉSEAU (PeerJS / WebRTC — aucun serveur à héberger)
@@ -1329,7 +1490,7 @@ function joinRoom(code) {
 }
 
 // =====================================================================
-refreshMenu(); requestAnimationFrame(frame);
+fitCanvas(); refreshMenu(); requestAnimationFrame(frame);
 const salon = new URLSearchParams(location.search).get("salon");
 if (salon) { history.replaceState(null, "", location.pathname); setTimeout(() => joinRoom(salon.toUpperCase()), 300); }
 </script>
